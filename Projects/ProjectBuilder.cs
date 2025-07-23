@@ -1,12 +1,9 @@
 using ProjectAssignmentPortal.Application.Common;
-using ProjectAssignmentPortal.Application.Models.Clients;
 using ProjectAssignmentPortal.Application.Models.Companies;
 using ProjectAssignmentPortal.Application.Models.Countries;
-using ProjectAssignmentPortal.Application.Models.Markets;
 using ProjectAssignmentPortal.Application.Models.Organisations;
 using ProjectAssignmentPortal.Application.Models.ProfitCenters;
 using ProjectAssignmentPortal.Application.Models.Projects.Enums;
-using ProjectAssignmentPortal.Application.Models.ServiceTypes;
 using ProjectAssignmentPortal.Application.Models.Workers;
 
 namespace ProjectAssignmentPortal.Application.Models.Projects;
@@ -23,7 +20,6 @@ public class ProjectBuilder
     // Additional optional properties from original Project class
     private Organisation? _branch;
     private Organisation? _businessUnit;
-    private Client? _client;
     private string? _comment;
     private List<ProjectCompany>? _companies;
     private Country? _country;
@@ -42,7 +38,7 @@ public class ProjectBuilder
     private bool _isClosed;
     private List<(string Id, string Code, string Label)>? _locations;
     private Worker? _manager;
-    private Market? _market;
+    private string? _market;
     private string? _marketSector;
     private string _name = string.Empty;
     // Required fields
@@ -132,6 +128,20 @@ public class ProjectBuilder
     }
 
     /// <summary>
+    ///     Configures the branch from a Result if successful.
+    /// </summary>
+    public ProjectBuilder WithBranch(Result<Organisation>? branchResult)
+    {
+        if (branchResult != null
+            && branchResult.IsSuccess)
+        {
+            _branch = branchResult.Value;
+        }
+
+        return this;
+    }
+
+    /// <summary>
     ///     Configures the business unit.
     /// </summary>
     public ProjectBuilder WithBusinessUnit(Organisation? businessUnit)
@@ -142,21 +152,28 @@ public class ProjectBuilder
     }
 
     /// <summary>
-    ///     Configures the client.
+    ///     Configures the business unit from a Result if successful.
     /// </summary>
-    public ProjectBuilder WithClient(Client? client)
+    public ProjectBuilder WithBusinessUnit(Result<Organisation>? businessUnitResult)
     {
-        _client = client;
+        if (businessUnitResult != null
+            && businessUnitResult.IsSuccess)
+        {
+            _businessUnit = businessUnitResult.Value;
+        }
 
         return this;
     }
 
     /// <summary>
-    ///     Configures the project comment.
+    ///     Configures the project comment if not null or whitespace.
     /// </summary>
     public ProjectBuilder WithComment(string? comment)
     {
-        _comment = comment;
+        if (!string.IsNullOrWhiteSpace(comment))
+        {
+            _comment = comment;
+        }
 
         return this;
     }
@@ -167,6 +184,34 @@ public class ProjectBuilder
     public ProjectBuilder WithCompanies(List<ProjectCompany>? companies)
     {
         _companies = companies;
+
+        return this;
+    }
+
+    /// <summary>
+    ///     Configures project companies from a list of Company objects if not null or empty.
+    /// </summary>
+    public ProjectBuilder WithCompanies(List<Company>? companies)
+    {
+        if (companies == null
+            || companies.Count == 0)
+        {
+            return this;
+        }
+
+        var projectCompanies = new List<ProjectCompany>();
+
+        foreach (var company in companies)
+        {
+            var projectCompanyResult = ProjectCompany.Create(company);
+
+            if (projectCompanyResult.IsSuccess)
+            {
+                projectCompanies.Add(projectCompanyResult.Value);
+            }
+        }
+
+        _companies = projectCompanies;
 
         return this;
     }
@@ -203,6 +248,20 @@ public class ProjectBuilder
     }
 
     /// <summary>
+    ///     Configures the department from a Result if successful.
+    /// </summary>
+    public ProjectBuilder WithDepartment(Result<Organisation>? departmentResult)
+    {
+        if (departmentResult != null
+            && departmentResult.IsSuccess)
+        {
+            _department = departmentResult.Value;
+        }
+
+        return this;
+    }
+
+    /// <summary>
     ///     Configures the project description.
     /// </summary>
     public ProjectBuilder WithDescription(string? description)
@@ -228,11 +287,28 @@ public class ProjectBuilder
     }
 
     /// <summary>
-    ///     Configures the project end date.
+    ///     Configures the division from a Result if successful.
+    /// </summary>
+    public ProjectBuilder WithDivision(Result<Organisation>? divisionResult)
+    {
+        if (divisionResult != null
+            && divisionResult.IsSuccess)
+        {
+            _division = divisionResult.Value;
+        }
+
+        return this;
+    }
+
+    /// <summary>
+    ///     Configures the project end date if it has a value.
     /// </summary>
     public ProjectBuilder WithEndDate(DateOnly? endDate)
     {
-        _endDate = endDate;
+        if (endDate.HasValue)
+        {
+            _endDate = endDate;
+        }
 
         return this;
     }
@@ -289,31 +365,41 @@ public class ProjectBuilder
     }
 
     /// <summary>
-    ///     Configures the project locations.
+    ///     Configures the project locations if not null or empty.
     /// </summary>
     public ProjectBuilder WithLocations(List<(string Id, string Code, string Label)>? locations)
     {
-        _locations = locations;
+        if (locations != null
+            && locations.Count > 0)
+        {
+            _locations = locations;
+        }
 
         return this;
     }
 
     /// <summary>
-    ///     Configures the project manager.
+    ///     Configures the project manager if not null.
     /// </summary>
     public ProjectBuilder WithManager(Worker? manager)
     {
-        _manager = manager;
+        if (manager != null)
+        {
+            _manager = manager;
+        }
 
         return this;
     }
 
     /// <summary>
-    ///     Configures the market.
+    ///     Configures the market if not null or whitespace.
     /// </summary>
-    public ProjectBuilder WithMarket(Market? market)
+    public ProjectBuilder WithMarket(string? market)
     {
-        _market = market;
+        if (!string.IsNullOrWhiteSpace(market))
+        {
+            _market = market;
+        }
 
         return this;
     }
@@ -321,9 +407,11 @@ public class ProjectBuilder
     /// <summary>
     ///     Configures the market sector.
     /// </summary>
-    public void WithMarketSector(string? marketSector)
+    public ProjectBuilder WithMarketSector(string? marketSector)
     {
         _marketSector = marketSector;
+
+        return this;
     }
 
     /// <summary>
@@ -347,118 +435,6 @@ public class ProjectBuilder
     }
 
     /// <summary>
-    ///     Conditionally sets optional branch if result is successful
-    /// </summary>
-    public ProjectBuilder WithOptionalBranch(Result<Organisation>? branchResult) => branchResult != null && branchResult.IsSuccess
-        ? WithBranch(branchResult.Value)
-        : this;
-
-    /// <summary>
-    ///     Conditionally sets optional business unit if result is successful
-    /// </summary>
-    public ProjectBuilder WithOptionalBusinessUnit(Result<Organisation>? businessUnitResult) => businessUnitResult != null && businessUnitResult.IsSuccess
-        ? WithBusinessUnit(businessUnitResult.Value)
-        : this;
-
-    /// <summary>
-    ///     Conditionally sets optional client if result is successful
-    /// </summary>
-    public ProjectBuilder WithOptionalClient(Result<Client>? clientResult) => clientResult != null && clientResult.IsSuccess
-        ? WithClient(clientResult.Value)
-        : this;
-
-    /// <summary>
-    ///     Conditionally sets optional comment if not null or whitespace
-    /// </summary>
-    public ProjectBuilder WithOptionalComment(string? comment) => !string.IsNullOrWhiteSpace(comment) ? WithComment(comment) : this;
-
-    /// <summary>
-    ///     Conditionally sets companies if the list is not null or empty
-    /// </summary>
-    public ProjectBuilder WithOptionalCompanies(List<Company> companies)
-    {
-        if (companies == null
-            || companies.Count == 0)
-        {
-            return this;
-        }
-
-        var projectCompanies = new List<ProjectCompany>();
-
-        foreach (var company in companies)
-        {
-            var projectCompanyResult = ProjectCompany.Create(company);
-
-            if (projectCompanyResult.IsSuccess)
-            {
-                projectCompanies.Add(projectCompanyResult.Value);
-            }
-        }
-
-        return WithCompanies(projectCompanies);
-    }
-
-    /// <summary>
-    ///     Conditionally sets optional department if result is successful
-    /// </summary>
-    public ProjectBuilder WithOptionalDepartment(Result<Organisation>? departmentResult) => departmentResult != null && departmentResult.IsSuccess
-        ? WithDepartment(departmentResult.Value)
-        : this;
-
-    /// <summary>
-    ///     Conditionally sets optional directory URL if not null or whitespace
-    /// </summary>
-    public ProjectBuilder WithOptionalDirectoryUrl(string? directoryUrl) => !string.IsNullOrWhiteSpace(directoryUrl) ? WithDirectoryUrl(directoryUrl) : this;
-
-    /// <summary>
-    ///     Conditionally sets optional division if result is successful
-    /// </summary>
-    public ProjectBuilder WithOptionalDivision(Result<Organisation>? divisionResult) => divisionResult != null && divisionResult.IsSuccess
-        ? WithDivision(divisionResult.Value)
-        : this;
-
-    /// <summary>
-    ///     Conditionally sets optional end date if has value
-    /// </summary>
-    public ProjectBuilder WithOptionalEndDate(DateOnly? endDate) => endDate.HasValue ? WithEndDate(endDate.Value) : this;
-
-    /// <summary>
-    ///     Conditionally sets optional locations if not null or empty
-    /// </summary>
-    public ProjectBuilder WithOptionalLocations(List<(string Id, string Code, string Label)>? locations) =>
-        locations != null && locations.Count > 0 ? WithLocations(locations) : this;
-
-    /// <summary>
-    ///     Conditionally sets optional manager if not null
-    /// </summary>
-    public ProjectBuilder WithOptionalManager(Worker? manager) => manager != null ? WithManager(manager) : this;
-
-    /// <summary>
-    ///     Conditionally sets optional project creator if not null
-    /// </summary>
-    public ProjectBuilder WithOptionalProjectCreator(Worker? creator) => creator != null ? WithProjectCreator(creator) : this;
-
-    /// <summary>
-    ///     Conditionally sets optional sales manager if not null
-    /// </summary>
-    public ProjectBuilder WithOptionalSalesManager(Worker? salesManager) => salesManager != null ? WithSalesManager(salesManager) : this;
-
-    /// <summary>
-    ///     Conditionally sets optional string value if not null or whitespace
-    /// </summary>
-    public ProjectBuilder WithOptionalSite(string? site) => !string.IsNullOrWhiteSpace(site) ? WithSite(site) : this;
-
-    /// <summary>
-    ///     Conditionally sets optional start date if has value
-    /// </summary>
-    public ProjectBuilder WithOptionalStartDate(DateOnly? startDate) => startDate.HasValue ? WithStartDate(startDate.Value) : this;
-
-    /// <summary>
-    ///     Conditionally sets optional updated date if has value
-    /// </summary>
-    public ProjectBuilder WithOptionalUpdatedAt(DateTime? updatedAt) => updatedAt.HasValue ? WithUpdatedAt(updatedAt.Value) : this;
-
-    /// <summary>
     ///     Configures the planned budget.
     /// </summary>
     public ProjectBuilder WithPlannedBudget(decimal? plannedBudget) => this;
@@ -480,39 +456,46 @@ public class ProjectBuilder
 
     public ProjectBuilder WithProjectCreator(Worker? projectCreator)
     {
-        _creator = projectCreator;
+        if (projectCreator != null)
+        {
+            _creator = projectCreator;
+        }
 
         return this;
     }
 
     public ProjectBuilder WithSalesManager(Worker? salesManager)
     {
-        _salesManager = salesManager;
+        if (salesManager != null)
+        {
+            _salesManager = salesManager;
+        }
 
         return this;
     }
 
     /// <summary>
-    ///     Configures the service type.
-    /// </summary>
-    public ProjectBuilder WithServiceType(ServiceType? serviceType) => this;
-
-    /// <summary>
-    ///     Configures the project site.
+    ///     Configures the project site if not null or whitespace.
     /// </summary>
     public ProjectBuilder WithSite(string? site)
     {
-        _site = site;
+        if (!string.IsNullOrWhiteSpace(site))
+        {
+            _site = site;
+        }
 
         return this;
     }
 
     /// <summary>
-    ///     Configures the project start date.
+    ///     Configures the project start date if it has a value.
     /// </summary>
     public ProjectBuilder WithStartDate(DateOnly? startDate)
     {
-        _startDate = startDate;
+        if (startDate.HasValue)
+        {
+            _startDate = startDate;
+        }
 
         return this;
     }
@@ -542,9 +525,12 @@ public class ProjectBuilder
     ///     Configures the last update timestamp for database reconstruction.
     ///     This method should only be used when recreating projects from database records.
     /// </summary>
-    public ProjectBuilder WithUpdatedAt(DateTime updatedAt)
+    public ProjectBuilder WithUpdatedAt(DateTime? updatedAt)
     {
-        _updatedAt = updatedAt;
+        if (updatedAt.HasValue)
+        {
+            _updatedAt = updatedAt;
+        }
 
         return this;
     }

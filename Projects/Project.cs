@@ -1,11 +1,9 @@
-﻿using ProjectAssignmentPortal.Application.Common;
-using ProjectAssignmentPortal.Application.Models.Companies;
+﻿using ProjectAssignmentPortal.Application.Models.Companies;
 using ProjectAssignmentPortal.Application.Models.Countries;
 using ProjectAssignmentPortal.Application.Models.Organisations;
 using ProjectAssignmentPortal.Application.Models.ProfitCenters;
 using ProjectAssignmentPortal.Application.Models.Projects.Enums;
 using ProjectAssignmentPortal.Application.Models.Projects.ProjectExternalLinks;
-using ProjectAssignmentPortal.Application.Models.ServiceTypes;
 using ProjectAssignmentPortal.Application.Models.Workers;
 
 namespace ProjectAssignmentPortal.Application.Models.Projects;
@@ -49,7 +47,6 @@ public sealed class Project
     public Classification? ProjectClassification { get; }
     public string? ReflexNumber { get; }
     public Worker? SalesManager { get; }
-    public ServiceType? ServiceType { get; }
     public string? Site { get; }
     public DateOnly? StartDate { get; init; }
     public ProjectStatus Status { get; init; }
